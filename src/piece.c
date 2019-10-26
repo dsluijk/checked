@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include "piece.h"
 
 /**
@@ -7,8 +6,8 @@
  *  It should be either a 1 or a 0.
  * @return A pointer to the piece.
  */
-Piece* createPiece(int player) {
-  Piece* piece = malloc(sizeof(Piece));
+Piece *createPiece(int player) {
+  Piece *piece = malloc(sizeof(Piece));
   (*piece).king = false;
   (*piece).player = player;
 

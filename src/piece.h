@@ -2,6 +2,7 @@
 #define PIECE
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 typedef struct Piece Piece;
 struct Piece {
@@ -9,6 +10,6 @@ struct Piece {
   int player;
 };
 
-Piece* createPiece(int player);
+Piece *createPiece(int player);
 
 #endif

@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include "board.h"
+#include "main.h"
 
 /**
  * Main function.
@@ -9,7 +6,10 @@
  */
 int main() {
   Board board = createBoard();
-  printBoard(board);
+  char *state = makeBoard(board);
+  printf("%s", state);
+
+  startSSH();
 
   exit(0);
 }

@@ -11,15 +11,17 @@ Board *waiting;
  */
 void sshClose(ssh_session session, ssh_channel channel, void *userdata) {
   Client *client = (Client *)userdata;
-  printf("Freeing!\n");
 
   if (client == waiting->player1) {
     free(waiting);
     waiting = NULL;
+  } else {
+    if(client->player == 0) {
+      ssh_event_remove_session(*client->board->player2->event, ssh_channel_get_session(*client->board->player2->chan));
+    } else {
+      ssh_event_remove_session(*client->board->player1->event, ssh_channel_get_session(*client->board->player1->chan));
+    }
   }
-
-  // ssh_disconnect(&client->board->player1);
-  // ssh_disconnect(&client->board->player2);
 }
 
 /**
@@ -135,7 +137,7 @@ void handleConnection(ssh_session session) {
     return;
   }
 
-  Client *client = newClient(user, &chan, &sess);
+  Client *client = newClient(user, &chan, &event);
 
   if (waiting == NULL) {
     waiting = createBoard();

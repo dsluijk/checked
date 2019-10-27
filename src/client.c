@@ -42,24 +42,16 @@ void handlePlacement(Client *client) {
  * @param key The pressed key.
  */
 void clientInput(Client *client, int key) {
-  if (!client->board->started) {
+  if (!client->board->started && key != 3) {
     return;
   }
 
   switch (key) {
   // Ctrl+C
   case 3:
-    printf("%s wants to exit!\n", client->name);
-    // ssh_channel_close(*client->chan);
-    // ssh_channel_free(*client->chan);
-    // ssh_disconnect(*client->sess);
-    // ssh_event_free
-
-    // ssh_event_remove_session(*client->event, *client->sess);
-    // ssh_event_free(*client->event);
-    ssh_disconnect(*client->sess);
-    // ssh_free(*client->sess);
-    // sshClose(*client->sess, *client->chan, client);
+    sshClose(ssh_channel_get_session(*client->chan), *client->chan, client);
+    ssh_event_remove_session(*client->event, ssh_channel_get_session(*client->chan));
+    ssh_channel_close(*client->chan);
     break;
   // Spacebar
   case 32:
@@ -110,9 +102,6 @@ void clientInput(Client *client, int key) {
 
     boardRender(client->board);
     break;
-  default:
-    printf("Unknown key %#4x from %s\n", key, client->name);
-    break;
   }
 }
 
@@ -123,11 +112,11 @@ void clientInput(Client *client, int key) {
  * @param sess The session for the client.
  * @return The new client.
  */
-Client *newClient(char *user, ssh_channel *chan, ssh_session *sess) {
+Client *newClient(char *user, ssh_channel *chan, ssh_event *event) {
   Client *client = malloc(sizeof(Client));
   client->name = user;
   client->chan = chan;
-  client->sess = sess;
+  client->event = event;
   client->x = 5;
   client->y = 5;
   client->selectedX = -1;

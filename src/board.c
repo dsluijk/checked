@@ -184,7 +184,6 @@ void startGame(Board* board) {
   board->started = true;
   board->activeSide = 0;
   boardRender(board);
-  printf("starting!\n");
 }
 
 /**

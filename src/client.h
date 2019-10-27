@@ -15,8 +15,8 @@ struct Client {
   Board *board;
   // SSH channel of the client.
   ssh_channel *chan;
-  // SSH session of the client.
-  ssh_session *sess;
+  // SSH events of the client.
+  ssh_event *event;
   // Player ID in the game.
   int player;
   // X axis of the cursor.
@@ -32,6 +32,6 @@ struct Client {
 };
 
 void clientInput(Client *client, int key);
-Client* newClient();
+Client* newClient(char *user, ssh_channel *chan, ssh_event *event);
 
 #endif

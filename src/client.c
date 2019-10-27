@@ -19,6 +19,10 @@ void handlePlacement(Client *client) {
     board->pieces[client->y][client->x] = board->pieces[client->selectedY][client->selectedX];
     board->pieces[client->selectedY][client->selectedX] = NULL;
     board->activeSide = client->player == 1 ? 0 : 1;
+
+    if(client->y == 0 || client->y == 9) {
+      board->pieces[client->y][client->x]->king = true;
+    }
   } else if (abs(xdiff) == 2 && (ydiff == direction * 2 || (hasKing && abs(ydiff) == 2))) {
     if (board->pieces[client->y - (ydiff / 2)][client->x - (xdiff / 2)] == NULL) {
       return;

@@ -9,6 +9,9 @@
  */
 Board *createBoard() {
   Board *board = malloc(sizeof(Board) + BOARD_SIZE * BOARD_SIZE);
+  board->started = false;
+  board->player1left = (BOARD_SIZE / 2) * PLAYER_LAYERS;
+  board->player2left = (BOARD_SIZE / 2) * PLAYER_LAYERS;
 
   for (int i = 0; i < BOARD_SIZE; i++) {
     int player = 0;
@@ -68,8 +71,28 @@ char *_writeDivider(char *cursor) {
  *  This correspondends to the x axis.
  * @return a modified cursor, to be used as new starting possition.
  */
-char *_writePiece(char *cursor, Board *board, int i, int j) {
+char *_writePiece(char *cursor, Board *board, int i, int j, Client *client) {
   Piece *piece = board->pieces[i][j];
+
+  if(i == client->y && j == client->x) {
+    if(client->selected) {
+      *cursor = '\xE2';
+      cursor += 1;
+      *cursor = '\x96';
+      cursor += 1;
+      *cursor = '\xB2';
+      cursor += 1;
+    } else {
+      *cursor = '\xE2';
+      cursor += 1;
+      *cursor = '\x96';
+      cursor += 1;
+      *cursor = '\xB3';
+      cursor += 1;
+    }
+    return cursor;
+  }
+
   if (piece == NULL) {
     *cursor = ' ';
     cursor += 1;
@@ -123,7 +146,8 @@ char *_writePiece(char *cursor, Board *board, int i, int j) {
  * @param board The current state of the board to print.
  * @return A pointer to the start of a null-terminated char sequence.
  */
-char *makeBoard(Board *board) {
+char *makeBoard(Client *client) {
+  Board *board = client->board;
   char *buffer = malloc(BOARD_BUFFER_SIZE);
   char *start = buffer;
 
@@ -135,7 +159,7 @@ char *makeBoard(Board *board) {
         *buffer = '|';
         buffer += 1;
       } else {
-        buffer = _writePiece(buffer, board, i, (j - (j % 3)) / 3);
+        buffer = _writePiece(buffer, board, i, (j - (j % 3)) / 3, client);
       }
     }
 
@@ -152,29 +176,16 @@ char *makeBoard(Board *board) {
 };
 
 void startGame(Board* board) {
-  char *out = makeBoard(board);
-  ssh_channel_write(*board->player1->chan, out, strlen(out));
-  ssh_channel_write(*board->player2->chan, out, strlen(out));
+  board->started = true;
+  board->activeSide = 0;
+  boardRender(board);
   printf("starting!\n");
 }
 
-void inputBoard(Client* client, int key) {
-  switch(key) {
-    case 3:
-      printf("%s wants to exit!\n", client->name);
-      // ssh_channel_close(*client->chan);
-      // ssh_channel_free(*client->chan);
-      // ssh_disconnect(*client->sess);
-      // ssh_event_free
+void boardRender(Board* board) {
+  char *board1 = makeBoard(board->player1);
+  char *board2 = makeBoard(board->player2);
 
-      // ssh_event_remove_session(*client->event, *client->sess);
-      // ssh_event_free(*client->event);
-      ssh_disconnect(*client->sess);
-      // ssh_free(*client->sess);
-      // sshClose(*client->sess, *client->chan, client);
-      break;
-    default:
-      printf("Unknown key %#4x from %s\n", key, client->name);
-      break;
-  }
+  ssh_channel_write(*board->player1->chan, board1, strlen(board1));
+  ssh_channel_write(*board->player2->chan, board2, strlen(board2));
 }

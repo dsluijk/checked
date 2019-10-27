@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 
+#include "client.h"
 #include "piece.h"
 #include "ssh.h"
 
@@ -15,13 +16,17 @@ typedef struct Client Client;
 typedef struct Board Board;
 struct Board {
   Piece *pieces[BOARD_SIZE][BOARD_SIZE];
+  bool started;
+  int activeSide;
+  int player1left;
+  int player2left;
   Client *player1;
   Client *player2;
 };
 
 Board *createBoard();
-char *makeBoard(Board *board);
+char *makeBoard(Client *client);
 void startGame(Board *board);
-void inputBoard(Client *client, int key);
+void boardRender(Board *board);
 
 #endif

@@ -19,7 +19,7 @@ static int sshRead(ssh_session sess, ssh_channel chan, void *data, uint32_t len,
                    int is_stderr, void *userdata) {
   char *p = data;
   int key = *(p + len - 1);
-  inputBoard((Client*)userdata, key);
+  clientInput((Client*)userdata, key);
 
   return 1;
 }
@@ -117,19 +117,27 @@ void handleConnection(ssh_session session) {
   client.name = user;
   client.chan = &chan;
   client.sess = &sess;
+  client.x = 5;
+  client.y = 5;
+  client.selectedX = -1;
+  client.selectedY = -1;
+  client.selected = false;
 
   if(waiting == NULL) {
     waiting = createBoard();
     client.board = waiting;
+    client.player = 0;
     waiting->player1 = &client;
   } else {
     client.board = waiting;
+    client.player = 1;
     waiting->player2 = &client;
     startGame(waiting);
     waiting = NULL;
   }
 
   cb.userdata = &client;
+  makeBoard(&client);
 
   do {
     ssh_event_dopoll(event, 1000);

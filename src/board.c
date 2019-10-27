@@ -69,6 +69,7 @@ char *_writeDivider(char *cursor) {
  *  This correspondends to the y axis.
  * @param j The J coordinate of the piece to print.
  *  This correspondends to the x axis.
+ * @param client The client to use, for writing the cursor.
  * @return a modified cursor, to be used as new starting possition.
  */
 char *_writePiece(char *cursor, Board *board, int i, int j, Client *client) {
@@ -175,6 +176,10 @@ char *makeBoard(Client *client) {
   return start;
 };
 
+/**
+ * Start the game.
+ * @param board The board to start.
+ */
 void startGame(Board* board) {
   board->started = true;
   board->activeSide = 0;
@@ -182,6 +187,10 @@ void startGame(Board* board) {
   printf("starting!\n");
 }
 
+/**
+ * Render the board to both participants.
+ * @param board The board to send out to.
+ */
 void boardRender(Board* board) {
   char *board1 = makeBoard(board->player1);
   char *board2 = makeBoard(board->player2);

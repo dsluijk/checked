@@ -2,11 +2,18 @@
 
 Board *waiting;
 
+/**
+ * Closing SSH callback.
+ * Cleans up any connections.
+ * @param session The session to close.
+ * @param channel The channel to close.
+ * @param userdata The client to close, in form of the userdata.
+ */
 void sshClose(ssh_session session, ssh_channel channel, void *userdata) {
-  Client *client = (Client*) userdata;
+  Client *client = (Client *)userdata;
   printf("Freeing!\n");
 
-  if(client == waiting->player1) {
+  if (client == waiting->player1) {
     free(waiting);
     waiting = NULL;
   }
@@ -15,15 +22,30 @@ void sshClose(ssh_session session, ssh_channel channel, void *userdata) {
   // ssh_disconnect(&client->board->player2);
 }
 
+/**
+ * Data avaiable callback.
+ * Fired when the client send data over SSH.
+ * @param sess Session from which the data comes from.
+ * @param chan Channel which send the data.
+ * @param data Pointer to the data from the client.
+ * @param len Length of the data
+ * @param id_stderr If the data is going to stderr.
+ * @param userdata Userdata, this is the client.
+ * @return the amount of read bytes.
+ */
 static int sshRead(ssh_session sess, ssh_channel chan, void *data, uint32_t len,
                    int is_stderr, void *userdata) {
   char *p = data;
   int key = *(p + len - 1);
-  clientInput((Client*)userdata, key);
+  clientInput((Client *)userdata, key);
 
   return 1;
 }
 
+/**
+ * Handle incomming connections.
+ * @param session The new session.
+ */
 void handleConnection(ssh_session session) {
   ssh_message message;
   ssh_channel chan = 0;
@@ -113,31 +135,23 @@ void handleConnection(ssh_session session) {
     return;
   }
 
-  Client client;
-  client.name = user;
-  client.chan = &chan;
-  client.sess = &sess;
-  client.x = 5;
-  client.y = 5;
-  client.selectedX = -1;
-  client.selectedY = -1;
-  client.selected = false;
+  Client *client = newClient(user, &chan, &sess);
 
-  if(waiting == NULL) {
+  if (waiting == NULL) {
     waiting = createBoard();
-    client.board = waiting;
-    client.player = 0;
-    waiting->player1 = &client;
+    client->board = waiting;
+    client->player = 0;
+    waiting->player1 = client;
   } else {
-    client.board = waiting;
-    client.player = 1;
-    waiting->player2 = &client;
+    client->board = waiting;
+    client->player = 1;
+    waiting->player2 = client;
     startGame(waiting);
     waiting = NULL;
   }
 
-  cb.userdata = &client;
-  makeBoard(&client);
+  cb.userdata = client;
+  makeBoard(client);
 
   do {
     ssh_event_dopoll(event, 1000);
@@ -149,6 +163,9 @@ void handleConnection(ssh_session session) {
   ssh_disconnect(session);
 }
 
+/**
+ * Start the SSH server
+ */
 void startSSH() {
   ssh_bind sshbind = ssh_bind_new();
   int port = SSHD_PORT;

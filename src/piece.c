@@ -1,7 +1,5 @@
 #include "piece.h"
 
-#include <stdio.h>
-
 /**
  * Create a new piece
  * @param player This is the player for which this is.

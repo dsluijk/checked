@@ -5,8 +5,11 @@
 #include <stdlib.h>
 
 typedef struct Piece Piece;
+// Piece of the board.
 struct Piece {
+  // Indicates if the piece is a king.
   bool king;
+  // Indicates to which player it belongs to.
   int player;
 };
 

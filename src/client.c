@@ -1,6 +1,69 @@
 #include "client.h"
 
 /**
+ * Check if a specific move is a valid captire move.
+ * @param board The board to play on.
+ * @param x The x coordinate of the piece.
+ * @param y The y coordinate of the piece.
+ * @param x The x coordinate of the destination.
+ * @param y The y coordinate of the destination.
+ * @return True if it is, false if not.
+ */
+bool checkCaptureUnit(Board *board, int fromX, int fromY, int toX, int toY) {
+  if(0 > fromX || BOARD_SIZE <= fromX || 0 > fromY || BOARD_SIZE <= fromY || 0 > toX || BOARD_SIZE <= toX || 0 > toY || BOARD_SIZE <= toY) {
+    return false;
+  }
+
+  Piece *start = board->pieces[fromY][fromX];
+  Piece *dest = board->pieces[toY][toX];
+  Piece *middle = board->pieces[fromY + (toY - fromY) / 2][fromX + (toX - fromX) / 2];
+  if(!start || !middle || dest) {
+    return false;
+  }
+
+  if(middle->player == start->player) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Check if the piece at the possition has the ability to capture a piece.
+ * @param board The board to play on.
+ * @param x The x coordinate of the piece.
+ * @param y The y coordinate of the piece.
+ * @return True if it can, false if not.
+ */
+bool checkCapture(Board *board, int x, int y) {
+  Piece *piece = board->pieces[y][x];
+  if(piece == NULL) {
+    return false;
+  }
+  int direction = piece->player == 0 ? 1 : -1;
+
+  if(checkCaptureUnit(board, x, y, (x + 2) * direction, (x + 2) * direction)) {
+    return true;
+  }
+
+  if(checkCaptureUnit(board, x, y, (x - 2) * direction, (x - 2) * direction)) {
+    return true;
+  }
+
+  if(!piece->king) {
+    return false;
+  }
+
+  if(checkCaptureUnit(board, x, y, -(x + 2) * direction, -(x + 2) * direction)) {
+    return true;
+  }
+
+  if(checkCaptureUnit(board, x, y, -(x - 2) * direction, -(x - 2) * direction)) {
+    return true;
+  }
+}
+
+/**
  * Handle placement of a piece.
  * @param client the client which placed a piece.
  */
@@ -16,6 +79,14 @@ void handlePlacement(Client *client) {
   }
 
   if (abs(xdiff) == 1 && (ydiff == direction || (hasKing && abs(ydiff) == 1))) {
+    for(int i = 0; i < BOARD_SIZE; i++) {
+      for(int j = 0; j < BOARD_SIZE; j++) {
+        if(checkCapture(board, i, j)) {
+          return;
+        }
+      }
+    }
+
     board->pieces[client->y][client->x] = board->pieces[client->selectedY][client->selectedX];
     board->pieces[client->selectedY][client->selectedX] = NULL;
     board->activeSide = client->player == 1 ? 0 : 1;
@@ -29,8 +100,16 @@ void handlePlacement(Client *client) {
     }
 
     board->pieces[client->y][client->x] = board->pieces[client->selectedY][client->selectedX];
+    board->pieces[client->y - (ydiff / 2)][client->x - (xdiff / 2)] = NULL;
     board->pieces[client->selectedY][client->selectedX] = NULL;
-    board->activeSide = client->player == 1 ? 0 : 1;
+
+    for(int i = 0; i < BOARD_SIZE; i++) {
+      for(int j = 0; j < BOARD_SIZE; j++) {
+        if(!checkCapture(board, i, j)) {
+          board->activeSide = client->player == 1 ? 0 : 1;
+        }
+      }
+    }
 
     if (board->activeSide == 0) {
       board->player1left--;

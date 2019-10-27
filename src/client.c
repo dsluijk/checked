@@ -34,8 +34,16 @@ void handlePlacement(Client *client) {
 
     if (board->activeSide == 0) {
       board->player1left--;
+
+      if(board->player1left == 0) {
+        printf("Player 2 won!");
+      }
     } else {
       board->player2left--;
+
+      if(board->player1left == 0) {
+        printf("Player 1 won!");
+      }
     }
   }
 }

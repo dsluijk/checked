@@ -1,17 +1,25 @@
 #include "ssh.h"
 
-static void sshClose(ssh_session session, ssh_channel channel, void *userdata) {
-  printf("Connection closed\n");
+Board *waiting;
+
+void sshClose(ssh_session session, ssh_channel channel, void *userdata) {
+  Client *client = (Client*) userdata;
+  printf("Freeing!\n");
+
+  if(client == waiting->player1) {
+    free(waiting);
+    waiting = NULL;
+  }
+
+  // ssh_disconnect(&client->board->player1);
+  // ssh_disconnect(&client->board->player2);
 }
 
 static int sshRead(ssh_session sess, ssh_channel chan, void *data, uint32_t len,
                    int is_stderr, void *userdata) {
   char *p = data;
-  char key = *(p + len - 1);
-  if (key == 67) {
-    char out[5] = "Hello";
-    ssh_channel_write(chan, out, 5);
-  }
+  int key = *(p + len - 1);
+  inputBoard((Client*)userdata, key);
 
   return 1;
 }
@@ -105,7 +113,23 @@ void handleConnection(ssh_session session) {
     return;
   }
 
-  printf("user: %s\n", user);
+  Client client;
+  client.name = user;
+  client.chan = &chan;
+  client.sess = &sess;
+
+  if(waiting == NULL) {
+    waiting = createBoard();
+    client.board = waiting;
+    waiting->player1 = &client;
+  } else {
+    client.board = waiting;
+    waiting->player2 = &client;
+    startGame(waiting);
+    waiting = NULL;
+  }
+
+  cb.userdata = &client;
 
   do {
     ssh_event_dopoll(event, 1000);
